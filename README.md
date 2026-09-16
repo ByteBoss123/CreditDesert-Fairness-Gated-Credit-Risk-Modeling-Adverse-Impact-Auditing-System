@@ -3,9 +3,10 @@
 
 **Project type:** Applied ML / fair-lending risk modeling
 **Built for:** Data Scientist / Credit Risk roles (non-prime lending, fintech)
-**Every number in this repo came from a script in this repo, run against real data.**
-Nothing here is simulated, placeholder, or fabricated — including the mistakes,
-which are documented rather than hidden.
+**Repository status:** Serving code, an exported model, datasets, and reported
+analysis outputs are included. The original training and audit scripts are not
+in the current repository or its existing commit history. Reported model metrics
+cannot be reproduced end to end from this checkout until those scripts are restored.
 
 ---
 
@@ -48,49 +49,43 @@ not a manufactured story to fit a narrative.
   triggered, because the raw HMDA data contains extreme data-quality outliers
   (loan amounts up to $375M). Fixed by switching to percentile-based bounds.
 
-## Repo Structure
+## Repository files
 
-```
-CreditDesert/
-├── README.md                          # This file
-├── databricks_equivalent.md           # Honest translation to Databricks/PySpark at scale
-├── data/
-│   ├── hmda_va_2024_modeling.parquet  # Component 1: real HMDA data, cleaned
-│   └── consumer_credit_data.csv       # Component 2: real consumer credit data
-├── src/
-│   ├── features.py                    # Component 1: feature engineering
-│   ├── train.py                       # Component 1: XGBoost + MLflow, two-variant comparison
-│   ├── fairness_audit.py              # Component 1: adverse impact ratio, model-adjusted disparity
-│   ├── explain_and_monitor.py         # Component 1: SHAP + PSI drift monitoring
-│   ├── features_consumer.py           # Component 2: feature engineering
-│   └── train_consumer.py              # Component 2: XGBoost + MLflow
-├── serving/
-│   ├── SERVING_README.md              # Deployment details and honest scope limits
-│   ├── app.py                         # FastAPI serving application
-│   ├── hmda_model_b.json              # Real trained model (exported)
-│   ├── category_schema.json           # Valid input codes, extracted from real data
-│   ├── numeric_ranges.json            # Percentile-based outlier bounds
-│   ├── Dockerfile
-│   └── requirements.txt
-└── outputs/
-    ├── fairness_audit_results.xlsx    # Component 1: AIR tables, model-adjusted disparity, geographic check
-    ├── shap_summary.png               # Component 1: SHAP explainability plot
-    ├── drift_monitoring_psi.csv       # Component 1: PSI drift check
-    ├── consumer_shap_summary.png      # Component 2: SHAP explainability plot
-    └── consumer_shap_feature_importance.csv
-```
+Files are stored in the repository root. Use these links to open them:
+
+| Purpose | Files |
+|---|---|
+| Serving code and dependencies | [app.py](app.py), [requirements.txt](requirements.txt), [Dockerfile](Dockerfile) |
+| Model and validation schemas | [hmda_model_b.json](hmda_model_b.json), [category_schema.json](category_schema.json), [numeric_ranges.json](numeric_ranges.json) |
+| Data | [hmda_va_2024_modeling.parquet](hmda_va_2024_modeling.parquet), [consumer_credit_data.csv](consumer_credit_data.csv) |
+| Audit and monitoring outputs | [fairness_audit_results.xlsx](fairness_audit_results.xlsx), [drift_monitoring_psi.csv](drift_monitoring_psi.csv) |
+| Explainability outputs | [shap_summary.png](shap_summary.png), [consumer_shap_summary.png](consumer_shap_summary.png), [consumer_shap_feature_importance.csv](consumer_shap_feature_importance.csv) |
+
+### Missing source scripts
+
+The original project description references `features.py`, `train.py`,
+`fairness_audit.py`, `explain_and_monitor.py`, `features_consumer.py`, and
+`train_consumer.py`. These files have not been uploaded. References to those
+scripts in the reports describe the original workflow; they are not runnable
+paths in this checkout. Restore the original scripts to reproduce the analysis.
+
+### Run the included serving code
+
+From the repository root, follow [SERVING_README.md](SERVING_README.md).
+The API loads its model and schemas from the same directory as `app.py`.
+The Databricks document describes a proposed translation, not a completed deployment.
 
 ## Full methodology, results, and honest limitations
 
 See:
-- **`docs/COMPONENT_1_FAIRNESS_AUDIT.md`** — HMDA modeling, leakage fix, adverse
+- [COMPONENT_1_FAIRNESS_AUDIT.md](COMPONENT_1_FAIRNESS_AUDIT.md) — HMDA modeling, leakage fix, adverse
   impact ratios, model-adjusted disparity finding, geographic redlining check,
   SHAP, drift monitoring, and full limitations
-- **`docs/COMPONENT_2_CONSUMER_CREDIT.md`** — consumer credit model, results,
+- [COMPONENT_2_CONSUMER_CREDIT.md](COMPONENT_2_CONSUMER_CREDIT.md) — consumer credit model, results,
   limitations
-- **`serving/SERVING_README.md`** — API testing evidence, design decisions,
+- [SERVING_README.md](SERVING_README.md) — API testing evidence, design decisions,
   deployment instructions
-- **`databricks_equivalent.md`** — how this pipeline translates to
+- [databricks_equivalent.md](databricks_equivalent.md) — how this pipeline translates to
   Databricks/Delta Lake/PySpark at production scale
 
 ## Tech Stack
