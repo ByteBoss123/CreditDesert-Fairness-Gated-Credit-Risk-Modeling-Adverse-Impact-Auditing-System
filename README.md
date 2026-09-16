@@ -3,10 +3,10 @@
 
 **Project type:** Applied ML / fair-lending risk modeling
 **Built for:** Data Scientist / Credit Risk roles (non-prime lending, fintech)
-**Repository status:** Serving code, an exported model, datasets, and reported
-analysis outputs are included. The original training and audit scripts are not
-in the current repository or its existing commit history. Reported model metrics
-cannot be reproduced end to end from this checkout until those scripts are restored.
+**Repository status:** Serving code, an exported model, datasets, reported analysis outputs,
+and six original training/audit scripts are included. The scripts were restored
+from the original CreditDesert.zip archive. Syntax checks passed; training and
+reported model metrics have not been independently rerun during restoration.
 
 ---
 
@@ -51,7 +51,8 @@ not a manufactured story to fit a narrative.
 
 ## Repository files
 
-Files are stored in the repository root. Use these links to open them:
+Data, serving files, and reports are stored in the repository root. Restored
+analysis scripts are in `src/`. Use these links to open them:
 
 | Purpose | Files |
 |---|---|
@@ -61,13 +62,32 @@ Files are stored in the repository root. Use these links to open them:
 | Audit and monitoring outputs | [fairness_audit_results.xlsx](fairness_audit_results.xlsx), [drift_monitoring_psi.csv](drift_monitoring_psi.csv) |
 | Explainability outputs | [shap_summary.png](shap_summary.png), [consumer_shap_summary.png](consumer_shap_summary.png), [consumer_shap_feature_importance.csv](consumer_shap_feature_importance.csv) |
 
-### Missing source scripts
+### Restored source scripts
 
-The original project description references `features.py`, `train.py`,
-`fairness_audit.py`, `explain_and_monitor.py`, `features_consumer.py`, and
-`train_consumer.py`. These files have not been uploaded. References to those
-scripts in the reports describe the original workflow; they are not runnable
-paths in this checkout. Restore the original scripts to reproduce the analysis.
+- [src/explain_and_monitor.py](src/explain_and_monitor.py)
+- [src/fairness_audit.py](src/fairness_audit.py)
+- [src/features.py](src/features.py)
+- [src/features_consumer.py](src/features_consumer.py)
+- [src/train.py](src/train.py)
+- [src/train_consumer.py](src/train_consumer.py)
+
+These are the original scripts, restored without modifying their model logic.
+They reference the original absolute workspace path `/home/claude/creditdesert`.
+Before running them, update these paths for your checkout or recreate that workspace
+layout with data in `data/` and writable `outputs/` and `mlruns/` directories.
+The current GitHub data files are at the repository root; the uploaded archive
+has the original folder layout. Training also needs pandas, NumPy, XGBoost,
+scikit-learn, MLflow, a Parquet engine, SHAP, matplotlib, and openpyxl; the root
+requirements file covers the serving application.
+
+Run HMDA training before fairness auditing or explainability: those scripts read
+`outputs/model_results.pkl`, which training generates. Consumer training generates
+`outputs/consumer_model_results.pkl`. These intermediate files are not included.
+
+**Evaluation limitation:** both original training scripts use their reported test
+split for early stopping. Reported AUC values therefore are not from a completely
+untouched final test set. A separate validation split is needed for a stronger
+independent evaluation.
 
 ### Run the included serving code
 
