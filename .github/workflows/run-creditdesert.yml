@@ -18,14 +18,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: Install dependencies
+        id: deps
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt 'scikit-learn<2' 'mlflow<4' pyarrow shap matplotlib openpyxl httpx
           mkdir -p run-results
           python -m pip freeze > run-results/environment.txt
       - name: Recreate original workspace layout
+        id: layout
         run: |
           sudo mkdir -p /home/claude/creditdesert
           sudo chown -R "$(id -u):$(id -g)" /home/claude/creditdesert
@@ -37,22 +39,22 @@ jobs:
           set -o pipefail
           python -u src/train.py > /tmp/hmda-training.log 2>&1
       - name: Train consumer credit model
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.layout.outcome == 'success' }}
         run: |
           set -o pipefail
           python -u src/train_consumer.py > /tmp/consumer-training.log 2>&1
       - name: Run fairness audit
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.layout.outcome == 'success' }}
         run: |
           set -o pipefail
           python -u src/fairness_audit.py > /tmp/fairness-audit.log 2>&1
       - name: Run explainability and drift monitoring
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.layout.outcome == 'success' }}
         run: |
           set -o pipefail
           python -u src/explain_and_monitor.py > /tmp/explainability.log 2>&1
       - name: Check serving API
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.layout.outcome == 'success' }}
         run: |
           python - <<'PY'
           import json
