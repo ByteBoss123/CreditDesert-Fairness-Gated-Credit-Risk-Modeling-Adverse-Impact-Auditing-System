@@ -1,0 +1,87 @@
+name: Run CreditDesert
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/run-creditdesert.yml'
+permissions:
+  contents: read
+jobs:
+  creditdesert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MPLBACKEND: Agg
+      OMP_NUM_THREADS: '2'
+      OPENBLAS_NUM_THREADS: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt 'scikit-learn<2' 'mlflow<4' pyarrow shap matplotlib openpyxl httpx
+          mkdir -p run-results
+          python -m pip freeze > run-results/environment.txt
+      - name: Recreate original workspace layout
+        run: |
+          sudo mkdir -p /home/claude/creditdesert
+          sudo chown -R "$(id -u):$(id -g)" /home/claude/creditdesert
+          mkdir -p /home/claude/creditdesert/{data,outputs,mlruns}
+          cp -r src /home/claude/creditdesert/
+          cp hmda_va_2024_modeling.parquet consumer_credit_data.csv /home/claude/creditdesert/data/
+      - name: Train HMDA models
+        run: |
+          set -o pipefail
+          python -u src/train.py > /tmp/hmda-training.log 2>&1
+      - name: Train consumer credit model
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          python -u src/train_consumer.py > /tmp/consumer-training.log 2>&1
+      - name: Run fairness audit
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          python -u src/fairness_audit.py > /tmp/fairness-audit.log 2>&1
+      - name: Run explainability and drift monitoring
+        if: ${{ !cancelled() }}
+        run: |
+          set -o pipefail
+          python -u src/explain_and_monitor.py > /tmp/explainability.log 2>&1
+      - name: Check serving API
+        if: ${{ !cancelled() }}
+        run: |
+          python - <<'PY'
+          import json
+          from fastapi.testclient import TestClient
+          from app import app, CATEGORY_SCHEMA
+          with TestClient(app) as client:
+              response = client.get("/health")
+              assert response.status_code == 200 and response.json()["model_loaded"]
+              payload = dict(loan_amount=250000, income=100, loan_to_value_ratio=80,
+                  loan_term=360, tract_to_msa_income_percentage=100,
+                  tract_owner_occupied_units=1000, tract_median_age_of_housing_units=30,
+                  ffiec_msa_md_median_family_income=100000, debt_to_income_numeric=30)
+              payload.update({key: values[0] for key, values in CATEGORY_SCHEMA.items()})
+              prediction = client.post("/predict", json=payload)
+              assert prediction.status_code == 200
+              assert 0 <= prediction.json()["approval_probability"] <= 1
+              invalid = client.post("/predict", json={**payload, "income": -1})
+              assert invalid.status_code == 422
+              summary = client.get("/monitoring/summary")
+              assert summary.status_code == 200 and summary.json()["n_predictions"] >= 1
+              with open("run-results/api-check.json", "w") as f:
+                  json.dump({"health": response.json(), "prediction": prediction.json(),
+                             "invalid_input_status": invalid.status_code,
+                             "monitoring": summary.json()}, f, indent=2)
+          PY
+      - name: Summarize run
+        if: always()
+        run: |
+          echo '## CreditDesert execution' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Training retains the original test-set early stopping; these are reproduction results, not independent final-test estimates.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'The API check uses the committed serving model, not the newly trained models.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Only step pass/fail status is published. Generated reports, models, data, and training logs remain on the ephemeral runner and are not uploaded.' >> "$GITHUB_STEP_SUMMARY"
