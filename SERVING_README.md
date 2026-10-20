@@ -1,3 +1,5 @@
+> Historical methodology and results. See README.md and VALIDATION.md for the repaired evaluation protocol. Numerical results below were not recomputed by editing this document. Fairness or compliance is not established by a threshold or feature exclusion.
+
 # CreditDesert Model Serving API
 
 A real FastAPI service serving the actual trained HMDA Model B (the fairness-cleared

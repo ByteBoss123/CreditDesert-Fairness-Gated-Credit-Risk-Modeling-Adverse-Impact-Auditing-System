@@ -1,3 +1,5 @@
+> Historical methodology and results. See README.md and VALIDATION.md for the repaired evaluation protocol. Numerical results below were not recomputed by editing this document. Fairness or compliance is not established by a threshold or feature exclusion.
+
 # Component 2: Consumer Installment Credit Risk Model
 
 HMDA is mortgage data. Koalafi underwrites lease-to-own/installment credit for

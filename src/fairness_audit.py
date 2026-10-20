@@ -1,18 +1,19 @@
+from paths import DATA, OUTPUTS
 """
 CreditDesert - Fairness Audit
-Standard fair-lending metrics: raw denial-rate disparity by group, and the
-Adverse Impact Ratio (AIR) / "80% rule" used by CFPB and EEOC in practice.
+Exploratory group disparity metrics; 0.80 is an illustrative review threshold,
+not a legal or compliance determination.
 Also checks whether MODEL predictions (not just raw outcomes) show disparity
-after controlling for legitimate underwriting factors.
+across groups (descriptive, not a causal adjustment).
 """
 import pickle
 import pandas as pd
 import numpy as np
 
-with open('/home/claude/creditdesert/outputs/model_results.pkl', 'rb') as f:
+with open(OUTPUTS / 'model_results.pkl', 'rb') as f:
     results = pickle.load(f)
 
-df = pd.read_parquet('/home/claude/creditdesert/data/hmda_va_2024_modeling.parquet')
+df = pd.read_parquet(DATA / 'hmda_va_2024_modeling.parquet')
 
 def air_table(group_col, label, actual_col='approved'):
     sub = df[df[group_col].isin(['White', 'Black or African American', 'Asian',
@@ -63,7 +64,7 @@ geo_table['approval_rate'] = geo_table['approval_rate'].round(4)
 print(geo_table)
 
 # Save all outputs
-with pd.ExcelWriter('/home/claude/creditdesert/outputs/fairness_audit_results.xlsx') as writer:
+with pd.ExcelWriter(OUTPUTS / 'fairness_audit_results.xlsx') as writer:
     race_table.to_excel(writer, sheet_name='Race_AIR')
     eth_table.to_excel(writer, sheet_name='Ethnicity_AIR')
     sex_table.to_excel(writer, sheet_name='Sex_AIR')

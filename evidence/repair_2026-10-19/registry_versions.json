@@ -1,0 +1,29 @@
+[
+  {
+    "name": "CreditDesert_HMDA_B",
+    "version": 1,
+    "run_id": "f44886c850a4470d8ff4e96d35bd1b1b",
+    "status": "READY",
+    "tags": {
+      "review_status": "candidate_not_approved"
+    }
+  },
+  {
+    "name": "CreditDesert_HMDA_A",
+    "version": 1,
+    "run_id": "7eec108023944d779f7d20c1610890ce",
+    "status": "READY",
+    "tags": {
+      "review_status": "candidate_not_approved"
+    }
+  },
+  {
+    "name": "CreditDesert_Consumer",
+    "version": 1,
+    "run_id": "9b10e7d32c7e4a1b9dcb221eb0ddd60e",
+    "status": "READY",
+    "tags": {
+      "review_status": "candidate_not_approved"
+    }
+  }
+]

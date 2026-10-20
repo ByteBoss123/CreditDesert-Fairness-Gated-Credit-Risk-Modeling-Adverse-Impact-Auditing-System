@@ -1,6 +1,6 @@
 """
 CreditDesert - Model Serving API
-Serves the real trained HMDA Model B (fairness-cleared: no tract_minority_population_percent)
+Serves the real trained HMDA Model B (excludes tract_minority_population_percent; not fairness-certified)
 for real-time approval-probability scoring.
 
 IMPORTANT DESIGN CHOICE: this API does NOT accept race, ethnicity, or sex as
@@ -27,7 +27,7 @@ logger = logging.getLogger("creditdesert-api")
 
 app = FastAPI(
     title="CreditDesert Risk Scoring API",
-    description="Real-time credit approval probability scoring (HMDA-trained model, fairness-cleared variant)",
+    description="Real-time credit approval probability scoring (HMDA-trained model, research demonstration)",
     version="1.0.0",
 )
 
@@ -92,7 +92,7 @@ class LoanApplication(BaseModel):
 class PredictionResponse(BaseModel):
     approval_probability: float
     predicted_decision: str
-    model_version: str = "hmda_model_b_fairness_cleared"
+    model_version: str = "hmda_model_b_historical_demo"
     warnings: list[str] = []
 
 
@@ -120,7 +120,7 @@ def build_feature_row(app_data: LoanApplication) -> pd.DataFrame:
     }
     df = pd.DataFrame([row])[FEATURE_ORDER]
     for c in CAT_COLS:
-        df[c] = df[c].astype('category')
+        df[c] = pd.Categorical(df[c], categories=CATEGORY_SCHEMA[c])
     return df
 
 

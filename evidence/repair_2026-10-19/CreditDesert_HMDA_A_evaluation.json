@@ -1,0 +1,27 @@
+{
+  "model": "CreditDesert_HMDA_A",
+  "metrics": {
+    "test_auc": 0.8827464442583121,
+    "test_pr_auc": 0.9524133993757671,
+    "test_brier": 0.09056656062602997,
+    "test_precision": 0.8849927240294794,
+    "test_recall": 0.979834727924744,
+    "test_f1": 0.9300019731649566,
+    "baseline_brier": 0.17220976011095587
+  },
+  "run_id": "7eec108023944d779f7d20c1610890ce",
+  "registration": {
+    "name": "CreditDesert_HMDA_A",
+    "version": 1
+  },
+  "source_sha256": "452b31a53b9bbbbe6903508e2b1ee96f115f24a89e7aff1e1ccd342eb1a47c52",
+  "split_counts": {
+    "train": 148215,
+    "validation": 49405,
+    "test": 49405
+  },
+  "limitations": [
+    "Random holdout, not temporal validation",
+    "Research demonstration; no lending approval or production promotion"
+  ]
+}

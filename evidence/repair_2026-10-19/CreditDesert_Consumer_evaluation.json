@@ -1,0 +1,27 @@
+{
+  "model": "CreditDesert_Consumer",
+  "metrics": {
+    "test_auc": 0.8643986553784861,
+    "test_pr_auc": 0.7157004888623709,
+    "test_brier": 0.13105399906635284,
+    "test_precision": 0.7541899441340782,
+    "test_recall": 0.5378486055776892,
+    "test_f1": 0.627906976744186,
+    "baseline_brier": 0.20234777928970385
+  },
+  "run_id": "9b10e7d32c7e4a1b9dcb221eb0ddd60e",
+  "registration": {
+    "name": "CreditDesert_Consumer",
+    "version": 1
+  },
+  "source_sha256": "acd2b41f7923a4b7e2264e6b9ae2eff8f3e8f9ba3080fb6967df1cfec9568cac",
+  "split_counts": {
+    "train": 2672,
+    "validation": 891,
+    "test": 891
+  },
+  "limitations": [
+    "Random holdout, not temporal validation",
+    "Research demonstration; no lending approval or production promotion"
+  ]
+}

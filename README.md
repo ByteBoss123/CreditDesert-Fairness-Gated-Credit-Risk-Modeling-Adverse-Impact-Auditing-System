@@ -1,128 +1,62 @@
-# CreditDesert
-### Fairness-Gated Credit Risk Modeling, Auditing & Deployment — On Real Data, End to End
+# CreditDesert: credit modeling and monitoring demonstration
 
-**Project type:** Applied ML / fair-lending risk modeling
-**Built for:** Data Scientist / Credit Risk roles (non-prime lending, fintech)
-**Repository status:** Serving code, an exported model, datasets, reported analysis outputs,
-and six original training/audit scripts are included. The scripts were restored
-from the original CreditDesert.zip archive. Syntax checks passed; training and
-reported model metrics have not been independently rerun during restoration.
+Two research models are included: HMDA mortgage **approval/denial prediction**
+and consumer credit good/bad outcome prediction. HMDA approval probability is
+not probability of repayment, default or creditworthiness.
 
----
+## Reproduce training and candidate registration
 
-## What this is
+Use Python 3.11 or 3.12 in a virtual environment:
 
-A three-part project that takes a genuine fair-lending problem — can you build
-an accurate credit risk model *and* know whether it's quietly reproducing
-lending disparities? — all the way from raw government data to a deployable,
-tested API.
+```bash
+python -m pip install -r requirements-training.txt
+python src/train_consumer.py --register
+python src/train.py --register
+python src/fairness_audit.py
+python src/explain_and_monitor.py
+python -m pytest tests -q
+```
 
-| Component | What it does | Data |
-|---|---|---|
-| **1. Fairness Audit** | XGBoost approval-risk model + adverse-impact testing + redlining-proxy analysis | 247,025 real 2024 HMDA mortgage records (Virginia) |
-| **2. Consumer Credit Model** | Risk model on non-mortgage installment credit, closing the domain gap to non-prime/lease-to-own lending | 4,454 real consumer credit applications |
-| **3. Serving API** | Real FastAPI service, live-tested, serving the actual trained model | Loads Component 1's model directly |
+Data defaults to the repository root. Override `CREDITDESERT_DATA_DIR` if needed.
+Generated files go to `outputs/`, configurable via `CREDITDESERT_OUTPUT_DIR`.
+`MLFLOW_TRACKING_URI` can point to an authorized tracking server; by default a
+local SQLite store is used. The `--register` flag registers candidate versions
+and tags them `candidate_not_approved`. No production alias is assigned.
 
-## The core finding
+Each model uses disjoint 60/20/20 stratified train/validation/test partitions.
+Category dictionaries are learned from training rows only. Early stopping uses
+validation data; the saved model is sliced to the selected iteration before
+final test evaluation. MLflow records parameters, metrics, source checksum,
+split indices, model artifact and the evaluation report. PR-AUC, ROC-AUC, Brier
+score and fixed-threshold precision/recall/F1 are reported.
 
-Even when a model is trained with **race, ethnicity, and sex completely
-excluded** as inputs, it can still reproduce racial disparities — because
-legitimate underwriting features (income, debt-to-income, loan-to-value) are
-themselves correlated with race due to structural economic conditions. This
-project measured that gap directly: a ~7-point difference in predicted
-approval probability between Black and White applicants, persisting after
-race-blind modeling. This is a genuine, defensible, and non-obvious result —
-not a manufactured story to fit a narrative.
+These are random holdouts, not temporal or lender-held-out validation. The fixed
+0.5 threshold is illustrative and has not been optimized for business costs.
+Repeated development against this dataset limits claims of external validity.
 
-## Quick facts
+## Serving and monitoring
 
-- **Model AUC**: 0.894 (HMDA), 0.853 (consumer credit) — both realistic, both
-  arrived at only after catching and fixing a severe label-leakage bug (see
-  below)
-- **Adverse Impact Ratio, Black applicants**: 0.863 (below reference, above the
-  regulatory 0.80 threshold)
-- **Model-adjusted disparity**: persists at ~7 points even with race excluded
-- **Serving API**: tested with real requests — strong applicant scores 98.06%
-  approval probability, weak applicant scores 2.24%
-- **A real bug found and fixed during testing**: an early outlier-detection
-  design used raw min/max as "normal" bounds and would have almost never
-  triggered, because the raw HMDA data contains extreme data-quality outliers
-  (loan amounts up to $375M). Fixed by switching to percentile-based bounds.
+`app.py` and the checked-in HMDA model support a local FastAPI demonstration.
+See `SERVING_README.md`. New training writes new models to `outputs/`; it does
+not silently replace the historical served model or its category schemas.
+The API records prediction counts, score distributions and range warnings.
+The batch monitor computes SHAP and PSI on two simulated periods from a holdout;
+it is not live production monitoring. PSI now covers values outside reference
+bounds and explicitly rejects samples with no finite observations.
 
-## Repository files
+## Governance scope
 
-Data, serving files, and reports are stored in the repository root. Restored
-analysis scripts are in `src/`. Use these links to open them:
+See `MODEL_CARD.md` for intended use, review requirements and limitations.
+Group disparity reports are exploratory. Excluding protected attributes or
+crossing a numerical threshold does not establish fairness or compliance.
+Mean predicted probabilities by group are descriptive comparisons, not causal
+or fully adjusted estimates. No lending decisions should use this demonstration.
 
-| Purpose | Files |
-|---|---|
-| Serving code and dependencies | [app.py](app.py), [requirements.txt](requirements.txt), [Dockerfile](Dockerfile) |
-| Model and validation schemas | [hmda_model_b.json](hmda_model_b.json), [category_schema.json](category_schema.json), [numeric_ranges.json](numeric_ranges.json) |
-| Data | [hmda_va_2024_modeling.parquet](hmda_va_2024_modeling.parquet), [consumer_credit_data.csv](consumer_credit_data.csv) |
-| Audit and monitoring outputs | [fairness_audit_results.xlsx](fairness_audit_results.xlsx), [drift_monitoring_psi.csv](drift_monitoring_psi.csv) |
-| Explainability outputs | [shap_summary.png](shap_summary.png), [consumer_shap_summary.png](consumer_shap_summary.png), [consumer_shap_feature_importance.csv](consumer_shap_feature_importance.csv) |
+## Evidence and historical outputs
 
-### Restored source scripts
-
-- [src/explain_and_monitor.py](src/explain_and_monitor.py)
-- [src/fairness_audit.py](src/fairness_audit.py)
-- [src/features.py](src/features.py)
-- [src/features_consumer.py](src/features_consumer.py)
-- [src/train.py](src/train.py)
-- [src/train_consumer.py](src/train_consumer.py)
-
-These are the original scripts, restored without modifying their model logic.
-They reference the original absolute workspace path `/home/claude/creditdesert`.
-Before running them, update these paths for your checkout or recreate that workspace
-layout with data in `data/` and writable `outputs/` and `mlruns/` directories.
-The current GitHub data files are at the repository root; the uploaded archive
-has the original folder layout. Training also needs pandas, NumPy, XGBoost,
-scikit-learn, MLflow, a Parquet engine, SHAP, matplotlib, and openpyxl; the root
-requirements file covers the serving application.
-
-Run HMDA training before fairness auditing or explainability: those scripts read
-`outputs/model_results.pkl`, which training generates. Consumer training generates
-`outputs/consumer_model_results.pkl`. These intermediate files are not included.
-
-**Evaluation limitation:** both original training scripts use their reported test
-split for early stopping. Reported AUC values therefore are not from a completely
-untouched final test set. A separate validation split is needed for a stronger
-independent evaluation.
-
-### Run the included serving code
-
-From the repository root, follow [SERVING_README.md](SERVING_README.md).
-The API loads its model and schemas from the same directory as `app.py`.
-The Databricks document describes a proposed translation, not a completed deployment.
-
-## Full methodology, results, and honest limitations
-
-See:
-- [COMPONENT_1_FAIRNESS_AUDIT.md](COMPONENT_1_FAIRNESS_AUDIT.md) — HMDA modeling, leakage fix, adverse
-  impact ratios, model-adjusted disparity finding, geographic redlining check,
-  SHAP, drift monitoring, and full limitations
-- [COMPONENT_2_CONSUMER_CREDIT.md](COMPONENT_2_CONSUMER_CREDIT.md) — consumer credit model, results,
-  limitations
-- [SERVING_README.md](SERVING_README.md) — API testing evidence, design decisions,
-  deployment instructions
-- [databricks_equivalent.md](databricks_equivalent.md) — how this pipeline translates to
-  Databricks/Delta Lake/PySpark at production scale
-
-## Tech Stack
-
-Python, pandas, XGBoost, MLflow (experiment tracking + model registry), SHAP
-(explainability), scikit-learn, FastAPI, Docker. Architected for a
-Databricks/Delta Lake lift at scale.
-
-## What this project is — and isn't
-
-**Is:** a rigorous, honestly-reported demonstration of the methodology a
-real fair-lending credit risk model needs — leakage detection, adverse impact
-testing, proxy-feature auditing, explainability, drift monitoring, and a
-tested serving layer.
-
-**Isn't:** a solved problem. It doesn't reduce credit deserts, doesn't reflect
-Koalafi's actual non-prime/lease-to-own population (HMDA is mortgage data),
-found no legally-actionable disparity (the 80% threshold wasn't crossed), and
-has no live public deployment (sandbox-built and tested, not internet-hosted).
-These limitations are documented throughout rather than glossed over.
+Root-level model files, charts and reports are historical artifacts. The older
+training used its test partition for early stopping, so historical AUC values
+are not untouched-test estimates. New results are separately recorded under
+`outputs/` and summarized in `VALIDATION.md` when executed. Original methodology
+files are retained as historical context and may describe the earlier protocol.
+Databricks translation notes are a proposal, not deployment evidence.

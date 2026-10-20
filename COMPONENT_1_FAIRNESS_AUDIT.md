@@ -1,3 +1,5 @@
+> Historical methodology and results. See README.md and VALIDATION.md for the repaired evaluation protocol. Numerical results below were not recomputed by editing this document. Fairness or compliance is not established by a threshold or feature exclusion.
+
 # Component 1: Fairness Audit & Risk Model (HMDA)
 
 A credit approval risk model and fair-lending audit built on **247,025 real 2024
