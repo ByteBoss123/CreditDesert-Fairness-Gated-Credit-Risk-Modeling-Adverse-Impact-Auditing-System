@@ -70,3 +70,7 @@ are not untouched-test estimates. New results are separately recorded under
 `outputs/` and summarized in `VALIDATION.md` when executed. Original methodology
 files are retained as historical context and may describe the earlier protocol.
 Databricks translation notes are a proposal, not deployment evidence.
+
+## License
+
+Code in this repository is released under the MIT License (see `LICENSE`). Datasets and third-party files are not covered by this license and remain under their original sources' terms.
