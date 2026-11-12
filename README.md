@@ -4,6 +4,16 @@ Two research models are included: HMDA mortgage **approval/denial prediction**
 and consumer credit good/bad outcome prediction. HMDA approval probability is
 not probability of repayment, default or creditworthiness.
 
+## Results (repaired protocol, untouched test sets)
+
+| Model | Test rows | Test ROC-AUC | Test PR-AUC | Brier (baseline) |
+|---|---|---|---|---|
+| HMDA approval/denial | 49,405 | 0.883 | 0.952 | 0.091 (0.172) |
+| Consumer credit good/bad | 891 | 0.864 | 0.716 | 0.131 (0.202) |
+
+Source: `evidence/repair_2026-10-19/CreditDesert_HMDA_A_evaluation.json` and `CreditDesert_Consumer_evaluation.json`.
+Earlier root-level AUC figures came from a protocol that used the test partition for early stopping and should not be cited.
+
 ## Reproduce training and candidate registration
 
 Use Python 3.11 or 3.12 in a virtual environment:
